@@ -1,0 +1,76 @@
+using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.SceneManagement;
+
+public class EnemyAi : MonoBehaviour
+{
+    //General
+    private NavMeshAgent agent;
+    private Transform player;
+    public LayerMask groundMask, playerMask;
+
+    //Patroling
+    private Vector3 walkPoint;
+    private bool walkPointSet;
+    public float walkPointRange;
+
+    //States
+    public float sightRange;
+    private bool playerInSightRange;
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, sightRange); //Way to visualize the check sphere
+    }
+
+    private void Awake()
+    {
+        player = GameObject.Find("Player").transform; //Find the player, this string needs to be exact
+        agent = GetComponent<NavMeshAgent>(); //Get NavMesh component on this GameObject (the enemy)
+    }
+
+    void Update()
+    {
+        //Sphere to look for player, determines if AI is patrolling or chasing
+        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, playerMask);
+
+        if (!playerInSightRange) Patroling(); //If player is not in sphere patrol
+        if (playerInSightRange) ChasePlayer(); //If player is in the sphere chase
+    }
+
+    private void Patroling()
+    {
+        if (!walkPointSet) SearchWalkPoint(); //if walkpoint not set, set on
+
+        if (walkPointSet) agent.SetDestination(walkPoint); //Set destination to current walkpoint
+
+        Vector3 distanceToWalkPoint = transform.position - walkPoint;
+
+        if (distanceToWalkPoint.magnitude < 1f) walkPointSet = false; //when close to walk point set a new one
+    }
+    private void SearchWalkPoint()
+    {
+        //Generate random X and Z values
+        float randomZDist = Random.Range(-walkPointRange, walkPointRange); 
+        float randomXDist = Random.Range(-walkPointRange, walkPointRange);
+
+        //Walk point is found by adding random values to the current x and z postitions
+        walkPoint = new Vector3(transform.position.x + randomZDist, transform.position.y, transform.position.z + randomXDist);
+
+        if (Physics.Raycast(walkPoint, -transform.up, 2f, groundMask))  walkPointSet = true; //If generated point is on ground it's a valid walkpoint
+    }
+
+    private void ChasePlayer()
+    {
+        agent.SetDestination(player.position); //current destination is the player
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.name == "player")
+        {
+            //SceneManager.LoadScene("Death"); //Logic for colliding with player (can be anything)
+        }
+    }
+}
