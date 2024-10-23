@@ -1,0 +1,23 @@
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Collectables : MonoBehaviour
+{
+    private GameObject[] coins;
+    public TextMeshProUGUI coinsText;
+
+    void Update()
+    {
+        coins = GameObject.FindGameObjectsWithTag("coin");
+
+        coinsText.text = "Coins left: " + coins.Length + "/2"; 
+
+        if (coins.Length <= 0)
+        {
+            SceneManager.LoadScene("Credits");
+        }
+    }
+}
